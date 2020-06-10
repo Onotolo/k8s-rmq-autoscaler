@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/api/apps/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -231,16 +231,16 @@ func TestCoolDown(t *testing.T) {
 }
 
 func TestCreateApp(t *testing.T) {
-	deployment := &v1beta1.Deployment{
-		ObjectMeta: v1.ObjectMeta{
+	deployment := &v1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
 				"k8s-rmq-autoscaler/enable": "true",
 			},
 		},
-		Spec: v1beta1.DeploymentSpec{
+		Spec: v1.DeploymentSpec{
 			Replicas: int32Ptr(2),
 		},
-		Status: v1beta1.DeploymentStatus{
+		Status: v1.DeploymentStatus{
 			ReadyReplicas: 1,
 		},
 	}

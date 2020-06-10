@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -66,7 +66,7 @@ func discover(ctx context.Context, hub *Autoscaler, inCluster bool, namespacesTo
 
 	namespaceToWatch := getNamespacesSet(namespacesToWatch)
 
-	namespaces, err := client.CoreV1().Namespaces().List(metav1.ListOptions{})
+	namespaces, err := client.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +82,10 @@ func discover(ctx context.Context, hub *Autoscaler, inCluster bool, namespacesTo
 			}
 		}
 
-		listWatch := createWatch(client, namespace.Name)
+		listWatch := createWatch(ctx, client, namespace.Name)
 		queue := workqueue.New()
 
-		indexer, informer := cache.NewIndexerInformer(listWatch, &v1beta1.Deployment{}, 0, cache.ResourceEventHandlerFuncs{
+		indexer, informer := cache.NewIndexerInformer(listWatch, &v1.Deployment{}, 0, cache.ResourceEventHandlerFuncs{
 			AddFunc: func(o interface{}) {
 				key, err := cache.MetaNamespaceKeyFunc(o)
 				if err == nil {
@@ -114,13 +114,13 @@ func discover(ctx context.Context, hub *Autoscaler, inCluster bool, namespacesTo
 	return client, nil
 }
 
-func createWatch(client *kubernetes.Clientset, namespace string) *cache.ListWatch {
+func createWatch(ctx context.Context, client *kubernetes.Clientset, namespace string) *cache.ListWatch {
 	return &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-			return client.AppsV1beta1().Deployments(namespace).List(options)
+			return client.AppsV1().Deployments(namespace).List(ctx, options)
 		},
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-			return client.AppsV1beta1().Deployments(namespace).Watch(options)
+			return client.AppsV1().Deployments(namespace).Watch(ctx, options)
 		},
 	}
 }
@@ -178,9 +178,9 @@ func (c *controller) processNextItem() bool {
 
 	if !exists {
 		fmt.Printf("Deployment %s does not exist anymore\n", key)
-		c.hub.delete <- obj.(*v1beta1.Deployment)
+		c.hub.delete <- obj.(*v1.Deployment)
 	} else {
-		c.hub.add <- obj.(*v1beta1.Deployment)
+		c.hub.add <- obj.(*v1.Deployment)
 	}
 	return true
 }
