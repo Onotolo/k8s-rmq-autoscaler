@@ -1,10 +1,10 @@
 language: go
 
 go:
-- 1.11.5
+- 1.13
 
 env:
-- GO111MODULE=on
+- GO113MODULE=on
 
 before_install:
 - make init

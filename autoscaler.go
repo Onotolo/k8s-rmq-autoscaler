@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"k8s.io/api/apps/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -58,8 +59,8 @@ const (
 
 // Autoscaler struct that will be used to received events from discovery
 type Autoscaler struct {
-	add    chan *v1beta1.Deployment
-	delete chan *v1beta1.Deployment
+	add    chan *v1.Deployment
+	delete chan *v1.Deployment
 	apps   map[string]*App
 	client *kubernetes.Clientset
 	rmq    *rmq
@@ -67,7 +68,7 @@ type Autoscaler struct {
 
 // App struct used to store information about a deployment
 type App struct {
-	ref               *v1beta1.Deployment
+	ref               *v1.Deployment
 	key               string
 	queue             string
 	vhost             string
@@ -129,7 +130,7 @@ func (a *Autoscaler) Run(ctx context.Context, client *kubernetes.Clientset, loop
 					consumers, queueSize, err := a.rmq.getQueueInformation(app.queue, app.vhost)
 
 					if err != nil {
-						recorder.Eventf(app.ref, v1.EventTypeWarning, "ASWarning", "error during queue fetch, removing the app (%s)", err)
+						recorder.Eventf(app.ref, corev1.EventTypeWarning, "ASWarning", "error during queue fetch, removing the app (%s)", err)
 						klog.Infof("%s error during queue fetch, removing the app (%s)", app.key, err)
 						continue
 					}
@@ -138,11 +139,11 @@ func (a *Autoscaler) Run(ctx context.Context, client *kubernetes.Clientset, loop
 					increment := app.scale(consumers, queueSize)
 
 					if increment > 0 {
-						recorder.Eventf(app.ref, v1.EventTypeNormal, "ASScaleUp", "obseved queueSize %d, adjusting by %d", queueSize, increment)
+						recorder.Eventf(app.ref, corev1.EventTypeNormal, "ASScaleUp", "obseved queueSize %d, adjusting by %d", queueSize, increment)
 					} else if increment < 0 {
-						recorder.Eventf(app.ref, v1.EventTypeNormal, "ASScaleDown", "obseved queueSize %d, adjusting by %d", queueSize, increment)
+						recorder.Eventf(app.ref, corev1.EventTypeNormal, "ASScaleDown", "obseved queueSize %d, adjusting by %d", queueSize, increment)
 					} else {
-						recorder.Eventf(app.ref, v1.EventTypeNormal, "ASStatus", "obseved queueSize %d", queueSize)
+						recorder.Eventf(app.ref, corev1.EventTypeNormal, "ASStatus", "obseved queueSize %d", queueSize)
 					}
 
 					if app.safeUnscale && increment < 0 && queueSize > 0 {
@@ -151,7 +152,7 @@ func (a *Autoscaler) Run(ctx context.Context, client *kubernetes.Clientset, loop
 						newReplica := app.replicas + increment
 						klog.Infof("%s Will be updated from %d replicas to %d", app.key, app.replicas, newReplica)
 						app.ref.Spec.Replicas = int32Ptr(newReplica)
-						newRef, err := client.AppsV1beta1().Deployments(app.ref.Namespace).Update(app.ref)
+						newRef, err := client.AppsV1().Deployments(app.ref.Namespace).Update(ctx, app.ref, metav1.UpdateOptions{})
 
 						if err != nil {
 							klog.Errorf("Error during deployment (%s) update, retry later (%s)", app.key, err)
@@ -228,7 +229,7 @@ func (app *App) scale(consumers int32, queueSize int32) int32 {
 	return 0
 }
 
-func createApp(deployment *v1beta1.Deployment, key string) (*App, error) {
+func createApp(deployment *v1.Deployment, key string) (*App, error) {
 	if _, ok := deployment.ObjectMeta.Annotations[AnnotationPrefix+Enable]; !ok {
 		return nil, errors.New(key + " not concerned by autoscaling, skipping")
 	}
@@ -374,6 +375,6 @@ func eventRecorder(
 			Interface: kubeClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(
 		scheme.Scheme,
-		v1.EventSource{Component: "autoscaler.rabbitmq"})
+		corev1.EventSource{Component: "autoscaler.rabbitmq"})
 	return recorder, nil
 }

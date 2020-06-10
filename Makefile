@@ -10,7 +10,7 @@ init:
 
 .PHONY: lint
 lint:
-	GO111MODULE=off $(GOPATH)/bin/gometalinter --disable-all --config .gometalinter.json ./...
+	GO113MODULE=off $(GOPATH)/bin/gometalinter --disable-all --config .gometalinter.json ./...
 
 .PHONY: build
 build:
