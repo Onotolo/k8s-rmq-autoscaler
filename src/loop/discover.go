@@ -1,4 +1,4 @@
-package main
+package loop
 
 import (
 	"context"
@@ -25,10 +25,10 @@ type controller struct {
 	indexer  cache.Indexer
 	queue    workqueue.Interface
 	informer cache.Controller
-	hub      *Autoscaler
+	hub      *AutoscalerLoop
 }
 
-func newController(queue workqueue.Interface, indexer cache.Indexer, informer cache.Controller, hub *Autoscaler) *controller {
+func newController(queue workqueue.Interface, indexer cache.Indexer, informer cache.Controller, hub *AutoscalerLoop) *controller {
 	return &controller{
 		informer: informer,
 		indexer:  indexer,
@@ -56,7 +56,7 @@ func createClient(inCluster bool) (*kubernetes.Clientset, error) {
 	return client, nil
 }
 
-func discover(ctx context.Context, hub *Autoscaler, inCluster bool, namespacesToWatch string) (*kubernetes.Clientset, error) {
+func discover(ctx context.Context, hub *AutoscalerLoop, inCluster bool, namespacesToWatch string) (*kubernetes.Clientset, error) {
 	// create the clientset
 	client, err := createClient(inCluster)
 
