@@ -5,6 +5,7 @@ import (
 	"github.com/medal-labs/k8s-rmq-autoscaler/base/scalable"
 	"github.com/medal-labs/k8s-rmq-autoscaler/base/strategy"
 	"github.com/medal-labs/k8s-rmq-autoscaler/parameters"
+	"k8s.io/klog"
 )
 
 var ScalingThreshold = strategy.ResultModifier{
@@ -26,8 +27,13 @@ var ScalingThreshold = strategy.ResultModifier{
 			return prev, nil
 		case queueLen > threshold:
 			return prev, nil
-		default:
-			return strategy.Result{Skip: true}, nil
 		}
+		if klog.V(2) {
+			klog.Infof(
+				"Skipping %s upscaling as its queue contains less messages than configured threshold. Messages: %d, scaling-threshold: %d",
+				app.Name, queueLen, threshold,
+			)
+		}
+		return strategy.Result{Skip: true}, nil
 	},
 }
