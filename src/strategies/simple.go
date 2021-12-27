@@ -21,6 +21,7 @@ var SimpleQueueBased = strategy.Config{
 	ResultModifiers: []strategy.ResultModifier{
 		modifiers.WithSteps,
 		modifiers.MinMax,
+		modifiers.ScalingThreshold,
 		modifiers.SkipUnstable,
 		modifiers.OverrideLimits,
 		modifiers.SafeUnscale,
