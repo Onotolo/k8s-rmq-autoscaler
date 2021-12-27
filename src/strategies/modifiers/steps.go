@@ -39,5 +39,5 @@ var WithSteps = strategy.ResultModifier{
 }
 
 func absLess(a, b int) bool {
-	return math.Abs(float64(a)) < math.Abs(float64(b))
+	return math.Abs(float64(a)) <= math.Abs(float64(b))
 }

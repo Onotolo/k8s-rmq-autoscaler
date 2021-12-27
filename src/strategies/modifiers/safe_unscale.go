@@ -21,7 +21,7 @@ var SafeUnscale = strategy.ResultModifier{
 		switch {
 		case prev.Skip || !safeUnscale:
 			return prev, nil
-		case prev.RequiredReplicas < app.Replicas && queueLen < 0:
+		case prev.RequiredReplicas < app.Replicas && queueLen > 0:
 			if klog.V(2) {
 				klog.Infof(
 					"Skipping %s downscaling as its queue contains messages and safe unscale is enabled",

@@ -12,4 +12,6 @@ const (
 	Max                              = "max-workers"
 	Override                         = "override"
 	SafeUnscale                      = "safe-unscale"
+	ScaleToZeroIn                    = "scale-to-zero-in"
+	ScaleToMinIn                     = "scale-to-min-in"
 )

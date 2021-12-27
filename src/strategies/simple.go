@@ -21,10 +21,11 @@ var SimpleQueueBased = strategy.Config{
 	ResultModifiers: []strategy.ResultModifier{
 		modifiers.WithSteps,
 		modifiers.MinMax,
-		modifiers.SkipUnstable,
-		modifiers.OverrideLimits,
+		modifiers.QuickUnscale,
 		modifiers.SafeUnscale,
+		modifiers.OverrideLimits,
 		modifiers.Cooldown,
+		modifiers.SkipUnstable,
 	},
 	Execute: func(app scalable.App, params parameter.Values) (strategy.Result, error) {
 
